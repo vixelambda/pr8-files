@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: api-gateway
+  config:
+    import:
+      optional:configserver:http://${ConfigServerHost:localhost}:8888
+  cloud:
+    gateway:
+      routes:
+        - id: resource
+          uri: http://127.0.0.1:8091/feign-check
+          predicates:
+            - Path=/feign-check
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: resource
+          uri: http://127.0.0.1:8091
+          predicates:
+            - Path=/tours
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+  security:
+    oauth2:
+      client:
+        registration:
+          gateway:
+            provider: spring
+            client-id: gateway
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/{registrationId}"
+            scope: openid,resource.read
+        provider:
+          spring:
+            issuer-uri: http://localhost:9000
